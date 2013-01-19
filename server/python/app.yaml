@@ -1,4 +1,4 @@
-application: your_appid
+application: qq325862401
 version: 1
 runtime: python27
 api_version: 1
@@ -16,3 +16,11 @@ handlers:
 - url: /robots.txt
   static_files: robots.txt
   upload: robots.txt
+  
+- url: /mail
+  script: wsgi_mail.app
+  secure: optional
+  
+libraries:
+- name: webapp2
+  version: "latest"  

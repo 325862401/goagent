@@ -1,0 +1,115 @@
+#!/usr/bin/env python
+# coding=utf-8
+import webapp2
+import logging
+import urllib
+import time
+import random
+import sys
+from google.appengine.api import mail
+from google.appengine.ext import db
+from google.appengine.api import urlfetch
+from google.appengine.runtime import apiproxy_errors
+def urlfetch_QQ_isExsit(url):
+    try:
+        deadline=10
+        response = urlfetch.fetch(url, method=urlfetch.GET,payload=None, headers={'Cache-Control': 'no-store'}, allow_truncated=False,follow_redirects=False, deadline=10)
+        logging.info('status_code==%s', response.status_code)
+    except apiproxy_errors.OverQuotaError as e:
+        logging.error('OverQuotaError(deadline=%s, url=%r)', deadline, url)
+        time.sleep(5)
+    except urlfetch.DeadlineExceededError as e:
+        logging.error('DeadlineExceededError(deadline=%s, url=%r)', deadline, url)
+        time.sleep(1)
+    except urlfetch.DownloadError as e:
+        logging.error('DownloadError(deadline=%s, url=%r)', deadline, url)
+    except urlfetch.ResponseTooLargeError as e:
+        logging.error('ResponseTooLargeError(deadline=%s, url=%r) response(%r)', deadline, url, response)
+    except Exception as e:
+        logging.error('%s(deadline=%s, url=%r)',str(e), deadline, url)
+    else:
+        if response.status_code == 200:
+            return response.content
+        else:
+            return None
+
+
+def gae_sendmail(toadress):
+    message = mail.EmailMessage(sender='GoAgent<shaozheng.wu@gmail.com>',
+                            subject=unicode('使用GoAgent看YouTube视频,上BBC学英语','utf8'))
+
+    message.bcc = toadress
+    message.body = ''
+    fd = open('goagent.html', 'rb')
+    message.html = fd.read()
+    fd.close()
+
+    message.attachments =  [('goagenthome.jpg',db.Blob(open("goagenthome.jpg", "rb").read())),
+                            ('IE_set.jpg',db.Blob(open("IE_set.jpg", "rb").read())),
+                            ('ie_con_proxy.jpg',db.Blob(open("ie_con_proxy.jpg", "rb").read())),
+                            ('proxy_set.jpg',db.Blob(open("proxy_set.jpg", "rb").read()))]
+    try:
+        message.send()
+    except Exception as e:
+        logging.error('Mail sent fail by gae,please check code.')
+        return False
+    else:
+        logging.info('Congratulations!Mail have been sent successfully by gae.')
+        #self.response.out.write('Congratulations!Mail have been sent successfully by gae.')
+        return True
+
+class MainPage(webapp2.RequestHandler):
+  def get(self,TEST=False):
+    self.response.headers['Content-Type'] = 'text/html'
+    self.response.out.write('<html><head> \
+                                <title>SpreadGoAent</title> \
+                            </head><body>')
+
+    url = "http://goagent.aws.af.cm/99"
+    #url = "http://open.baidu.com/special/time/"
+    response = urlfetch_QQ_isExsit(url)
+    if not response:
+        self.response.out.write('The response content is None<br>')
+        self.response.out.write("""
+      </body>
+      </html>""")
+        return False
+    response = response.split('|')
+    if TEST:
+        if not random.randint(0,99):
+            response.append('325862401')
+
+    self.response.out.write('The first is %s and the end is %s in the QQ list<br>' %(response[0],response[-1]))
+    logging.debug('The first is %s and the end is %s in the QQ list' ,response[0],response[-1])
+    try:
+        int(response[0])
+    except ValueError:
+        logging.warning('urlfetch result is not QQ num,please check goagent.aws.af.cm server')
+
+        mail.send_mail(sender='GoAgent<shaozheng.wu@gmail.com>',
+                        to="Scola<325862401@qq.com>",
+                        subject="goagent.aws.af.cm died",
+                        body="""
+        Dear Scola:
+        http://goagent.aws.af.cm return None.Please check it.
+        """)
+
+    else:
+        logging.info('urlfetch result is valid QQ num,happy')
+
+        numtoadr = lambda f: 'GoAgent<%s@qq.com>' %f
+        addr = map(numtoadr, response)
+        retval = gae_sendmail(addr)
+        if retval:
+            self.response.out.write('Congratulations!Mail have been sent successfully by gae.')
+        else:
+            self.response.out.write('Sorry!Mail have not sent by gae.')
+
+    #response = urllib.urlopen('http://scola.hp.af.cm/').read()
+
+    self.response.out.write("""
+      </body>
+      </html>""")
+#if __name__ == '__main__':
+logging.basicConfig(level=logging.INFO, format='%(levelname)s - - %(asctime)s %(message)s', datefmt='[%b %d %H:%M:%S]')
+app = webapp2.WSGIApplication([('/mail', MainPage)], debug=True)
