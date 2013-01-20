@@ -58,7 +58,7 @@ import yaml
 from google.appengine.api import appinfo
 from google.appengine.api import appinfo_includes
 from google.appengine.api import backendinfo
-#from google.appengine.api import croninfo
+from google.appengine.api import croninfo  #shaozheng.wu 
 #from google.appengine.api import dosinfo
 #from google.appengine.api import queueinfo
 from google.appengine.api import validation
@@ -2742,7 +2742,7 @@ class AppCfgApp(object):
     Returns:
       A CronInfoExternal object or None if the file does not exist.
     """
-    return None
+    #return None #shaozheng.wu
     return self._ParseYamlFile(basepath, 'cron', croninfo.LoadSingleCron)
 
   def _ParseQueueYaml(self, basepath):
