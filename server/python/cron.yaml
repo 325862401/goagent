@@ -1,5 +1,5 @@
 ﻿cron:
 - description: periodic send mail
   url: /mail
-  schedule: every day 05:00
+  schedule: every day 23:58
   timezone: America/Los_Angeles

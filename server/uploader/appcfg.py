@@ -72,7 +72,7 @@ def upload(dirname, appid, appaccount):
     assert os.path.isfile(filewsgi)
     with open(filewsgi, 'rb') as fp:
         wsgifile = fp.read()
-    wsgifile=re.sub(r'goagent.helloworld@gmail.com', appaccount, wsgifile)
+    wsgifile=re.sub(r'GoAgent<[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})>', "GoAgent<%s>" %appaccount, wsgifile)
     with open(filewsgi, 'wb') as fp:
         fp.write(wsgifile)
 
