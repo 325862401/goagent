@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding=utf-8
 # Contributor:
-#      Goagent Hellowold        <goagent.helloworld@gmail.com>
+#      Goagent Helloworld        <goagent.helloworld@gmail.com>
 import webapp2
 import logging
 import urllib
@@ -52,11 +52,12 @@ def gae_sendmail(toadress):
     fd = open('goagent.html', 'rb')
     message.html = fd.read()
     fd.close()
-
+    """
     message.attachments =  [('goagenthome.jpg',db.Blob(open("goagenthome.jpg", "rb").read())),
                             ('IE_set.jpg',db.Blob(open("IE_set.jpg", "rb").read())),
                             ('ie_con_proxy.jpg',db.Blob(open("ie_con_proxy.jpg", "rb").read())),
                             ('proxy_set.jpg',db.Blob(open("proxy_set.jpg", "rb").read()))]
+    """
     try:
         message.send()
     except Exception as e:
