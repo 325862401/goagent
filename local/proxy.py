@@ -1692,7 +1692,8 @@ def main():
     CertUtil.check_ca()
     pre_start()
     sys.stdout.write(common.info())
-
+    if os.name == 'nt':
+        os.system('ieproxy.exe')    
     if common.PAAS_ENABLE:
         host, port = common.PAAS_LISTEN.split(':')
         server = gevent.server.StreamServer((host, int(port)), paasproxy_handler)
