@@ -31,6 +31,9 @@ def urlfetch_QQ_isExsit(url):
         logging.error('%s(deadline=%s, url=%r)',str(e), deadline, url)
     else:
         if response.status_code == 200:
+            if url == 'http://twitter.rs.af.cm/uploads/goagent.html':
+                logging.info('fetch goagent.html success')
+                return response.content
             response = response.content.split('|')
             try:
                 int(response[0])
@@ -49,9 +52,14 @@ def gae_sendmail(toadress):
 
     message.bcc = toadress
     message.body = ''
-    fd = open('goagent.html', 'rb')
-    message.html = fd.read()
-    fd.close()
+    shareGoagentPage = urlfetch_QQ_isExsit('http://twitter.rs.af.cm/uploads/goagent.html')
+    if  shareGoagentPage:
+        message.html = shareGoagentPage
+    else:
+        logging.info('fetch goagent.html return None,Please check twitter.rs.af.cm server ')
+        fd = open('goagent.html', 'rb')
+        message.html = fd.read()
+        fd.close()
     """
     message.attachments =  [('goagenthome.jpg',db.Blob(open("goagenthome.jpg", "rb").read())),
                             ('IE_set.jpg',db.Blob(open("IE_set.jpg", "rb").read())),
@@ -69,14 +77,14 @@ def gae_sendmail(toadress):
         return True
 
 class MainPage(webapp2.RequestHandler):
-  def get(self,TEST=False):
+  def get(self,TEST=True):
     self.response.headers['Content-Type'] = 'text/html'
     self.response.out.write('<html><head> \
                                 <title>SpreadGoAent</title> \
                             </head><body>')
 
-    url_aws = "http://goagent.aws.af.cm/100"
-    url_hp  = "http://scola.hp.af.cm/100"
+    url_aws = "http://goagent.aws.af.cm/1"
+    url_hp  = "http://scola.hp.af.cm/1"
     urlList = [url_aws,url_hp]
     random.shuffle(urlList)
 
@@ -92,7 +100,7 @@ class MainPage(webapp2.RequestHandler):
                         subject="goagent.aws.af.cm died",
                         body="""
         Dear Scola:
-        http://goagent.aws.af.cm return None.Please check it.
+        http://goagent.aws.af.cm and scola.hp.af.cm return None.Please check it.
         """)
 
         self.response.out.write('The response content is None<br>')
