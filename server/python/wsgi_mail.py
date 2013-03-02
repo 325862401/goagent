@@ -77,14 +77,14 @@ def gae_sendmail(toadress):
         return True
 
 class MainPage(webapp2.RequestHandler):
-  def get(self,TEST=True):
+  def get(self,TEST=False):
     self.response.headers['Content-Type'] = 'text/html'
     self.response.out.write('<html><head> \
                                 <title>SpreadGoAent</title> \
                             </head><body>')
 
-    url_aws = "http://goagent.aws.af.cm/1"
-    url_hp  = "http://scola.hp.af.cm/1"
+    url_aws = "http://goagent.aws.af.cm/100"
+    url_hp  = "http://scola.hp.af.cm/100"
     urlList = [url_aws,url_hp]
     random.shuffle(urlList)
 
