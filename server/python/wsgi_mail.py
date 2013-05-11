@@ -8,6 +8,7 @@ import urllib
 import time
 import random
 import sys
+import re
 from google.appengine.api import mail
 from google.appengine.ext import db
 from google.appengine.api import urlfetch
@@ -16,7 +17,7 @@ def urlfetch_QQ_isExsit(url):
     try:
         deadline=10
         response = urlfetch.fetch(url, method=urlfetch.GET,payload=None, headers={'Cache-Control': 'no-store'}, allow_truncated=False,follow_redirects=False, deadline=10)
-        logging.info('status_code==%s', response.status_code)
+        logging.info('status_code==%s url==%s', response.status_code, url)
     except apiproxy_errors.OverQuotaError as e:
         logging.error('OverQuotaError(deadline=%s, url=%r)', deadline, url)
         time.sleep(5)
@@ -31,8 +32,11 @@ def urlfetch_QQ_isExsit(url):
         logging.error('%s(deadline=%s, url=%r)',str(e), deadline, url)
     else:
         if response.status_code == 200:
-            if url == 'http://twitter.rs.af.cm/uploads/goagent.html':
+            if 'goagent.html' in url:
                 logging.info('fetch goagent.html success')
+                return response.content
+            if 'README.md' in url:
+                logging.info('fetch github.com readme.md success')
                 return response.content
             response = response.content.split('|')
             try:
@@ -47,19 +51,25 @@ def urlfetch_QQ_isExsit(url):
 
 
 def gae_sendmail(toadress):
-    message = mail.EmailMessage(sender='GoAgent<goagent.helloworld@gmail.com>',
+    message = mail.EmailMessage(sender='GoAgent<shaozheng.wu@gmail.com>',
                             subject=unicode('使用GoAgent看YouTube视频,上BBC学英语','utf8'))
 
     message.bcc = toadress
     message.body = ''
-    shareGoagentPage = urlfetch_QQ_isExsit('http://twitter.rs.af.cm/uploads/goagent.html')
+
+    shareGoagentPage = urlfetch_QQ_isExsit('http://crater.herokuapp.com/uploads/goagent.html')
     if  shareGoagentPage:
         message.html = shareGoagentPage
     else:
-        logging.info('fetch goagent.html return None,Please check twitter.rs.af.cm server ')
-        fd = open('goagent.html', 'rb')
-        message.html = fd.read()
-        fd.close()
+        goagentPage = re.findall(r'"http.+goagent.html"', urlfetch_QQ_isExsit('https://github.com/325862401/spread_goagent/blob/appfog/README.md'))[0][1:-1]
+        shareGoagentPage = urlfetch_QQ_isExsit(goagentPage)
+        if  shareGoagentPage:
+            message.html = shareGoagentPage
+        else:
+            logging.info('fetch goagent.html return None,Please check goagent.html page server ')
+            fd = open('goagent.html', 'rb')
+            message.html = fd.read()
+            fd.close()
     """
     message.attachments =  [('goagenthome.jpg',db.Blob(open("goagenthome.jpg", "rb").read())),
                             ('IE_set.jpg',db.Blob(open("IE_set.jpg", "rb").read())),
@@ -77,15 +87,17 @@ def gae_sendmail(toadress):
         return True
 
 class MainPage(webapp2.RequestHandler):
-  def get(self,TEST=False):
+  def get(self,TEST=True):
     self.response.headers['Content-Type'] = 'text/html'
     self.response.out.write('<html><head> \
                                 <title>SpreadGoAent</title> \
                             </head><body>')
 
-    url_aws = "http://goagent.aws.af.cm/100"
-    url_hp  = "http://scola.hp.af.cm/100"
-    urlList = [url_aws,url_hp]
+    QQSize = 100
+    url_aws = "http://goagent.aws.af.cm/%d" %QQSize
+    url_hp  = "http://scola.hp.af.cm/%d" %QQSize
+    url_heroku = "http://crater.herokuapp.com/%d" %QQSize
+    urlList = [url_aws,url_hp,url_heroku]
     random.shuffle(urlList)
 
     #url = "http://open.baidu.com/special/time/"
@@ -93,14 +105,16 @@ class MainPage(webapp2.RequestHandler):
     response = urlfetch_QQ_isExsit(urlList[0])
     if response is None:
         response = urlfetch_QQ_isExsit(urlList[1])
+        if response is None:
+            response = urlfetch_QQ_isExsit(urlList[2])
     if not response:
-        logging.warning('fetch goagent.aws.af.cm and scola.hp.af.cm,response result is None')
-        mail.send_mail(sender='GoAgent<goagent.helloworld@gmail.com>',
+        logging.warning('fetch QQ list,response result is None')
+        mail.send_mail(sender='GoAgent<shaozheng.wu@gmail.com>',
                         to="Scola<325862401@qq.com>",
                         subject="goagent.aws.af.cm died",
                         body="""
         Dear Scola:
-        http://goagent.aws.af.cm and scola.hp.af.cm return None.Please check it.
+        http://goagent.aws.af.cm,crater.herokuapp.com and scola.hp.af.cm return None.Please check it.
         """)
 
         self.response.out.write('The response content is None<br>')
