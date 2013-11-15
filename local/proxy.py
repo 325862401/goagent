@@ -1683,6 +1683,34 @@ def pre_start():
         http.create_ssl_connection = http.create_ssl_connection_aggressive
         pass
 
+def _check_bool(result, func, args):
+    if not result:
+        raise ctypes.WinError()
+    # else build final result from result, args, outmask, and 
+    # inoutmask. Typically it's just result, unless you specify 
+    # out/inout parameters in the prototype.
+    return args
+
+
+def on_exit(event):
+    os.system('ieproxy.exe off')
+        
+_BOOL = ctypes.c_long
+_DWORD = ctypes.c_ulong
+_kernel32 = ctypes.windll.kernel32
+_SIGNAL_HANDLER = ctypes.WINFUNCTYPE(_BOOL, _DWORD)
+_kernel32.SetConsoleCtrlHandler.argtypes = (_SIGNAL_HANDLER, _BOOL)
+_kernel32.SetConsoleCtrlHandler.restype = _BOOL
+_kernel32.SetConsoleCtrlHandler.errcheck = _check_bool
+
+_console_ctrl_handlers = {}
+
+def set_console_ctrl_handler(handler):
+    if handler not in _console_ctrl_handlers:
+        h = _SIGNAL_HANDLER(handler)
+        _kernel32.SetConsoleCtrlHandler(h, True)
+        _console_ctrl_handlers[handler] = h
+        
 def main():
     global __file__
     if os.path.islink(__file__):
@@ -1693,6 +1721,7 @@ def main():
     pre_start()
     sys.stdout.write(common.info())
     if os.name == 'nt':
+        set_console_ctrl_handler(on_exit)
         os.system('ieproxy.exe')    
     if common.PAAS_ENABLE:
         host, port = common.PAAS_LISTEN.split(':')
