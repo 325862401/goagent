@@ -179,6 +179,7 @@ import ConfigParser
 import httplib
 import urllib2
 import threading
+import subprocess
 
 class CertUtil(object):
     """CertUtil module, based on mitmproxy"""
@@ -1693,7 +1694,7 @@ def _check_bool(result, func, args):
 
 
 def on_exit(event):
-    os.system('ieproxy.exe off')
+    subprocess.call('ieproxy.exe off')
         
 _BOOL = ctypes.c_long
 _DWORD = ctypes.c_ulong
@@ -1722,7 +1723,8 @@ def main():
     sys.stdout.write(common.info())
     if os.name == 'nt':
         set_console_ctrl_handler(on_exit)
-        os.system('ieproxy.exe')    
+        subprocess.call('ieproxy.exe')    
+
     if common.PAAS_ENABLE:
         host, port = common.PAAS_LISTEN.split(':')
         server = gevent.server.StreamServer((host, int(port)), paasproxy_handler)
